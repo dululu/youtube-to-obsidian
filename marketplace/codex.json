@@ -1,0 +1,28 @@
+{
+  "manifest_version": "1.0",
+  "tool_name": "youtube-to-obsidian",
+  "description": "Convert YouTube / Bilibili videos into structured Obsidian notes with optional keyframe screenshots.",
+  "entrypoints": [
+    {
+      "type": "skill",
+      "path": "SKILL.md",
+      "notes": "Agent reads SKILL.md and drives the bundled scripts"
+    },
+    {
+      "type": "cli",
+      "command": "bash scripts/fetch_transcript.sh --url \"{url}\" --out /tmp/yt-obsidian && python3 scripts/clean_srt.py --dir /tmp/yt-obsidian --timestamps",
+      "notes": "Fetch and clean subtitles only"
+    },
+    {
+      "type": "cli-files",
+      "command": "bash scripts/make_screenshots.sh --url \"{url}\" --out /tmp/yt-obsidian/shots --max 16 --contact-sheet",
+      "notes": "Extract timestamped keyframes (requires ffmpeg)"
+    }
+  ],
+  "inputs": ["url", "screenshots", "lang", "dir"],
+  "outputs": ["obsidian_note", "screenshots", "timestamps_tsv"],
+  "secrets": [],
+  "categories": ["knowledge_management", "automation", "content_tools"],
+  "license": "MIT",
+  "repository": "https://github.com/dululu/youtube-to-obsidian"
+}

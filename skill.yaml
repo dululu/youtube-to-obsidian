@@ -1,0 +1,53 @@
+name: youtube-to-obsidian
+display_name: YouTube to Obsidian
+version: 1.0.0
+description: |
+  把 YouTube / Bilibili 视频自动转化为 Obsidian 结构化笔记。
+  抓字幕（人工字幕优先、自动字幕兜底、多语言回退、cookie 回退）→ 清洗去重 →
+  按「知识型走费曼策略、观点型走求真策略」深度改写 → 写入 vault；
+  加「截图」参数可抽取带真实时间戳的关键帧并嵌入笔记对应段落。
+author: dululu
+license: MIT
+repository: https://github.com/dululu/youtube-to-obsidian
+inputs:
+  - name: url
+    type: string
+    description: 视频链接（YouTube / Bilibili / 其它 yt-dlp 支持的站点）
+  - name: mode
+    type: string
+    description: "可选：截图模式（参数里出现「截图」「screenshot」即开启）"
+  - name: lang
+    type: string
+    description: "可选：字幕语言优先级，如 en,zh-Hans"
+  - name: dir
+    type: string
+    description: "可选：笔记存放目录"
+outputs:
+  - name: note
+    type: file
+    description: Obsidian Markdown 笔记（含 frontmatter 与 wikilink）
+  - name: screenshots
+    type: files
+    description: "（可选）关键帧截图 + timestamps.tsv + contact-sheet.png"
+triggers:
+  - "视频转笔记"
+  - "YouTube 笔记"
+  - "B站视频笔记"
+  - "字幕转文字"
+  - "视频截图"
+dependencies:
+  - name: yt-dlp
+    required: true
+    install: brew install yt-dlp
+  - name: python3
+    required: true
+  - name: ffmpeg
+    required: false
+    install: brew install ffmpeg
+    note: 仅截图模式需要
+examples:
+  - cli: |
+      bash scripts/fetch_transcript.sh --url "https://youtu.be/xxx" --out /tmp/yt-obsidian
+      python3 scripts/clean_srt.py --dir /tmp/yt-obsidian --timestamps
+      bash scripts/make_screenshots.sh --url "https://youtu.be/xxx" --out /tmp/yt-obsidian/shots --contact-sheet
+    description: 手动跑一遍完整链路（Agent 会自动完成这些步骤，不必手动执行）

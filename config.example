@@ -1,0 +1,13 @@
+# 复制到 ~/.config/youtube-to-obsidian/config 后按需修改
+#
+# 这份配置只影响「笔记存到哪里」，不影响抓取逻辑。
+# 也可以临时用环境变量覆盖（优先级高于本文件）。
+
+# vault 根目录（必须包含 .obsidian 目录）
+YT_OBSIDIAN_VAULT="/Users/you/Obsidian/MyVault"
+
+# 笔记存放目录，相对 vault 的路径
+YT_OBSIDIAN_NOTE_DIR="视频笔记"
+
+# 截图附件目录，相对 vault 的路径
+YT_OBSIDIAN_ATTACH_SUBDIR="attachments/yt-screenshots"

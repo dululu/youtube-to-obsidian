@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# 本地跑出来的产物
+/out/
+/tmp/
+*.srt
+*.vtt
+*.timed.txt
+contact-sheet.png
+shot_*.png
+timestamps.tsv

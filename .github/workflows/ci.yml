@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          for f in scripts/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f"
+          done
+
+      - name: Python syntax
+        run: |
+          python3 -m py_compile scripts/clean_srt.py
+          python3 - <<'PY'
+          import ast, pathlib
+          ast.parse(pathlib.Path("scripts/clean_srt.py").read_text(encoding="utf-8"))
+          print("clean_srt.py ok")
+          PY
+
+      - name: SKILL.md frontmatter
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
+          text = pathlib.Path("SKILL.md").read_text(encoding="utf-8")
+          if not text.startswith("---"):
+              sys.exit("SKILL.md 缺少 frontmatter")
+          block = text.split("---", 2)[1]
+          for field in ("name:", "description:"):
+              if field not in block:
+                  sys.exit(f"SKILL.md frontmatter 缺少 {field}")
+          print("SKILL.md frontmatter ok")
+          PY
+
+      - name: Scripts are executable
+        run: |
+          test -x scripts/clean_srt.py
+          test -x scripts/fetch_transcript.sh
+          echo "executable bits ok"
+
+      - name: JSON manifests
+        run: |
+          for f in market.json marketplace/claude.json marketplace/codex.json; do
+            python3 -m json.tool "$f" > /dev/null
+            echo "$f ok"
+          done

@@ -1,0 +1,26 @@
+{
+  "name": "youtube-to-obsidian",
+  "description": "Turn YouTube / Bilibili videos into structured Obsidian notes, optionally with keyframe screenshots.",
+  "schema_version": "1.0",
+  "entrypoint": {
+    "type": "skill",
+    "files": ["SKILL.md"],
+    "scripts": [
+      "scripts/fetch_transcript.sh",
+      "scripts/clean_srt.py",
+      "scripts/make_screenshots.sh",
+      "scripts/resolve_vault.sh",
+      "scripts/check_deps.sh"
+    ]
+  },
+  "secrets_required": [],
+  "input_schema": {
+    "url": {"type": "string", "description": "Video URL (YouTube / Bilibili)"},
+    "screenshots": {"type": "boolean", "description": "Enable keyframe extraction"},
+    "lang": {"type": "string", "description": "Subtitle language preference"},
+    "dir": {"type": "string", "description": "Target note directory inside the vault"}
+  },
+  "output": {"type": "files", "description": "Obsidian markdown note plus optional screenshot attachments"},
+  "repository": "https://github.com/dululu/youtube-to-obsidian",
+  "license": "MIT"
+}
