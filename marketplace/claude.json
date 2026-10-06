@@ -7,6 +7,7 @@
     "files": ["SKILL.md"],
     "scripts": [
       "scripts/fetch_transcript.sh",
+      "scripts/transcribe_audio.sh",
       "scripts/clean_srt.py",
       "scripts/make_screenshots.sh",
       "scripts/resolve_vault.sh",

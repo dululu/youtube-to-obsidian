@@ -124,6 +124,15 @@ fi
 
 # ---------- 时长 ----------
 duration="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$video" 2>/dev/null | head -1)"
+
+# 纯音频没有画面可截，提前说清楚，免得后面报一堆 ffmpeg 内部的错
+if ! ffprobe -v error -select_streams v:0 -show_entries stream=codec_type \
+     -of default=noprint_wrappers=1:nokey=1 "$video" 2>/dev/null | grep -q video; then
+  echo "ERROR: 这个文件没有视频流（可能是纯音频或被抽过音轨），截不了图。" >&2
+  echo "       播客 / 录音类内容本来就无图可截，直接出文字笔记即可。" >&2
+  exit 1
+fi
+
 if [ -z "$duration" ]; then
   echo "ERROR: ffprobe 读不到时长，文件可能损坏：$video" >&2
   exit 1

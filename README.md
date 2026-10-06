@@ -23,6 +23,10 @@
 **问题三：视频里的图，文字笔记留不住。**
 架构图、对比表、公式推导、可视化结果——这些恰恰是文字描述最费劲的部分。抽成截图存进 vault 才不丢。
 
+**问题四：有些视频拿不到字幕，或者你压根不想登录。**
+内部录像、屏幕录制、下载下来的本地文件、B 站风控时的 412——这些情况下
+`transcribe_audio.sh` 会直接抽音轨转写，**不需要任何站点登录**。
+
 ---
 
 ## 效果
@@ -86,6 +90,7 @@ git clone https://github.com/dululu/youtube-to-obsidian.git \
 | `yt-dlp` | 抓字幕和元数据 | `brew install yt-dlp` 或 `pipx install yt-dlp` | 必需 |
 | `python3` | 字幕清洗 | 系统自带 / `brew install python3` | 必需 |
 | `ffmpeg` + `ffprobe` | 截图模式抽帧 | `brew install ffmpeg` | 仅截图模式 |
+| `whisper` 家族 | 无字幕时语音转写 | `pipx install openai-whisper`，Apple Silicon 建议 `pipx install mlx-whisper`（快很多） | 仅 ASR 兜底 |
 
 自检一条命令：
 
@@ -118,6 +123,10 @@ python3 scripts/clean_srt.py --dir /tmp/yt-obsidian --timestamps
 bash scripts/make_screenshots.sh --url "<URL>" --out /tmp/yt-obsidian/shots \
   --max 16 --contact-sheet
 
+# 3'. 无字幕时：本地文件直接转写（不用登录任何站点）
+bash scripts/transcribe_audio.sh --video /path/to/video.mp4 --out /tmp/yt-obsidian
+python3 scripts/clean_srt.py --dir /tmp/yt-obsidian --timestamps   # 之后流程完全一样
+
 # 4. 看看解析出来的 vault 路径对不对
 bash scripts/resolve_vault.sh
 ```
@@ -137,6 +146,12 @@ bash scripts/resolve_vault.sh
 | `make_screenshots.sh` | `--mode auto\|scene\|interval` | 抽帧策略，默认 ≤30 分钟用画面变化检测 |
 | | `--max 16` | 截图张数上限，超出自动均匀抽稀 |
 | | `--width 1280` | 截图宽度 |
+| | `--video <文件>` | 已经有本地视频时直接用，跳过下载 |
+| `transcribe_audio.sh` | `--video <文件>` | 从本地视频抽音轨转写（**不需要登录**） |
+| | `--audio <文件>` | 从本地音频转写 |
+| | `--url <链接>` | 下载音轨后转写 |
+| | `--model base\|small\|medium` | 模型越大越准越慢；Apple Silicon 默认 `small` |
+| | `--language zh` | 已知语言就写死，比自动检测准 |
 | | `--contact-sheet` | 额外拼一张总览图，方便一次性挑图 |
 | | `--video <文件>` | 已经有本地视频时直接用，跳过下载 |
 
@@ -207,6 +222,7 @@ youtube-to-obsidian/
 ├── scripts/
 │   ├── check_deps.sh              # 依赖自检
 │   ├── fetch_transcript.sh        # 抓字幕 + 元数据（cookie / 语言回退）
+│   ├── transcribe_audio.sh        # 语音转写兜底（本地文件 / 链接均可）
 │   ├── clean_srt.py               # SRT / VTT 清洗与去重
 │   ├── make_screenshots.sh        # 关键帧抽取
 │   └── resolve_vault.sh           # vault 路径解析

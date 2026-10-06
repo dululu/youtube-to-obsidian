@@ -65,23 +65,78 @@ bash scripts/fetch_transcript.sh --url "<URL>" --extra "--extractor-args youtube
 
 ## 4. 完全没有字幕
 
-先确认真的是没有，而不是语言不对：
+**最简单的办法：让用户直接把视频文件给你。**
+很多情况下用户手上就有文件，或者站点风控导致你压根拿不到字幕。
+这时不需要登录、不需要 cookie，本地转写即可：
+
+```bash
+bash scripts/transcribe_audio.sh --video ~/Downloads/lecture.mp4 --out /tmp/yt-obsidian
+python3 scripts/clean_srt.py --dir /tmp/yt-obsidian --timestamps
+# 之后照常走 Step 4，流程完全一致
+```
+
+支持 `--video`（本地视频）/ `--audio`（本地音频）/ `--url`（下载音轨）三种输入。只有链接时：
+
+```bash
+bash scripts/transcribe_audio.sh --url "<URL>" --out /tmp/yt-obsidian --language zh
+```
+
+脚本会自动按 `mlx-whisper → whisper CLI → whisper Python API` 挑一个已装好的后端，统一输出 `$OUT/transcript.srt`。
+
+---
+
+### 模型怎么选
+
+| 视频时长 | CPU-only | Apple Silicon（mlx-whisper） |
+| --- | --- | --- |
+| < 10 分钟 | `small` | `medium` |
+| 10-45 分钟 | `small`（赶时间用 `base`） | `small` |
+| > 45 分钟 | `base`，或先问用户 | `small` |
+
+**超过 45 分钟的视频先问用户**，不要自己闷头跑一个小时的转写。
+
+Apple Silicon 装 mlx-whisper 能快很多，装完不用改任何参数，脚本会优先用它：
+
+```bash
+pipx install mlx-whisper
+bash scripts/transcribe_audio.sh --video foo.mp4 --out /tmp/yt-obsidian --model medium
+```
+
+`base` / `small` / `medium` 权重第一次自动下载（约 140MB / 460MB / 1.5GB），之后缓存在 `~/.cache/whisper`。
+**SSL 报错通常是代理或证书问题**——手动下好权重放进 `~/.cache/whisper` 再跑即可。
+
+---
+
+### 转写质量
+
+机器转写一定有错字，**人名、术语、数字的同音错字尤其常见**。写笔记时：
+
+1. 人名、术语、机构名对照视频标题和简介交叉核对
+2. 数字、"亿/万" 这类单位重点检查
+3. **交付时必须告诉用户这是机器转写**，哪些信息需要复核要说清楚
+
+---
+
+### 手动版（不想用脚本时）
+
+先确认真的是没有字幕，而不是语言不对：
 
 ```bash
 bash scripts/fetch_transcript.sh --url "<URL>" --list-subs
 ```
 
-如果列表为空，走语音转写（ASR）。推荐两条路：
+列表为空才走转写。两条路：
 
 **方案 A：本地 Whisper（隐私好，慢）**
 
 ```bash
-pipx install openai-whisper          # 或 brew install whisper-cpp
 OUT=/tmp/yt-obsidian
 mkdir -p "$OUT"
 yt-dlp --cookies-from-browser chrome -x --audio-format mp3 \
   -o "$OUT/audio.%(ext)s" "<URL>"
 whisper "$OUT/audio.mp3" --model medium --language zh --output_format srt --output_dir "$OUT"
+# whisper CLI 输出的固定是 audio.srt，改名后下游统一
+mv "$OUT/audio.srt" "$OUT/transcript.srt" 2>/dev/null
 python3 scripts/clean_srt.py --dir "$OUT" --timestamps
 ```
 
@@ -94,6 +149,8 @@ mlx_whisper "$OUT/audio.mp3" --model mlx-community/whisper-large-v3-mlx \
 ```
 
 转写结果的处理方式与字幕完全一致，接着跑 Step 3 即可。**如果是自动转写，交付时要提醒用户可能有识别错误。**
+
+> 用 `transcribe_audio.sh` 就不用记这些细节——它自动挑后端、统一输出文件名。
 
 ---
 

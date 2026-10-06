@@ -14,6 +14,11 @@
       "notes": "Fetch and clean subtitles only"
     },
     {
+      "type": "cli",
+      "command": "bash scripts/transcribe_audio.sh --video \"{video_path}\" --out /tmp/yt-obsidian --model small",
+      "notes": "ASR fallback when no subtitles exist; works on local files without any site login"
+    },
+    {
       "type": "cli-files",
       "command": "bash scripts/make_screenshots.sh --url \"{url}\" --out /tmp/yt-obsidian/shots --max 16 --contact-sheet",
       "notes": "Extract timestamped keyframes (requires ffmpeg)"

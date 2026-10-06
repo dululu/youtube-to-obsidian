@@ -15,7 +15,7 @@ allowed-tools:
 
 把一条视频链接变成一篇**人愿意读**的 Obsidian 笔记。
 
-- **输入**：视频 URL ＋ 可选参数（语言、存放目录、是否截图）
+- **输入**：视频 URL（**或本地视频/音频文件**）＋ 可选参数（语言、存放目录、是否截图）
 - **输出**：`<vault>/<笔记目录>/<频道 - 标题>.md`，截图模式下额外产出附件图片
 - **边界**：只处理「有字幕或能转写」的视频；不搬运、不发布视频本身；除用户要求外不改动已有笔记
 
@@ -48,6 +48,9 @@ allowed-tools:
 短链（`b23.tv`）直接交给 yt-dlp 跟随，不要手动展开。
 
 **只有这三种情况才追问用户**：① 没有 URL；② 多 P / 播放列表视频没说是哪一集；③ 完全没有字幕、需要决定是否走语音转写。其余一律用默认值直接做。
+
+> **输入是本地文件时**（用户直接把视频/音频给你，或者不想登录站点）：跳过后续的字幕抓取，
+> 直接走 Step 2-B 的 `transcribe_audio.sh`。截图模式同理，`make_screenshots.sh` 用 `--video` 传入本地文件即可。
 
 ## Step 1 — 依赖自检
 
@@ -82,6 +85,30 @@ bash "$SKILL_DIR/scripts/fetch_transcript.sh" --url "<URL>" --out "$OUT" --lang 
 - 报错提示读不到浏览器 Cookies：那是 macOS 权限问题，见 `references/troubleshooting.md`
 
 **拿不到任何字幕时**：走 `references/troubleshooting.md` 的语音转写（ASR）兜底，或者明确告诉用户这条视频处理不了。**绝对不要凭标题猜内容、编造视频里没说的话。**
+
+### Step 2-B — 语音转写兜底（ASR）
+
+**适用条件**：视频完全没有字幕，或用户直接给了本地视频/音频文件。
+
+```bash
+# 本地视频文件
+bash "$SKILL_DIR/scripts/transcribe_audio.sh" --video /path/to/video.mp4 --out /tmp/yt-obsidian
+
+# 本地音频文件
+bash "$SKILL_DIR/scripts/transcribe_audio.sh" --audio /path/to/audio.m4a --out /tmp/yt-obsidian
+
+# 只有链接时，脚本自己下载音轨
+bash "$SKILL_DIR/scripts/transcribe_audio.sh" --url "<URL>" --out /tmp/yt-obsidian
+```
+
+脚本会先抽出 16k 单声道音轨，再按 `mlx-whisper → whisper CLI → whisper Python API` 的顺序自动挑一个已装好的后端，产出 `$OUT/transcript.srt`。之后**照常走 Step 3 清洗**，流程完全一致。
+
+取舍要点：
+
+- `--model`：默认 Apple Silicon 用 `small`、其它用 `base`。想更准就用 `medium`，代价是时间
+- `--language zh`：已知语言就写死，比自动检测准，`zh` 也不要省略
+- 时长与模型的选择见 `references/troubleshooting.md` 的表；**超过 45 分钟的视频先问用户**，不要自己跑一小时的转写
+- 转写结果一定有错字。**交付时必须提醒用户这是机器转写**，写笔记时遇到人名、术语、数字要交叉核对
 
 ## Step 3 — 清洗字幕
 
@@ -251,7 +278,8 @@ rm -rf /tmp/yt-obsidian
 | YouTube 提示 confirm you're not a bot | 先在浏览器登录 YouTube，再用 cookie 策略重试；或 `--extra "--extractor-args youtube:player_client=web_safari"` |
 | Bilibili 报 412 / 风控 | 用 cookie 重试；仍失败则降低请求频率，隔一会儿再试 |
 | 指定语言没有字幕 | 回退到该平台其它默认语言，并告知用户实际使用的语言 |
-| 完全没有字幕 | 走 ASR 兜底（见 troubleshooting），或明确告知无法处理 |
+| 完全没有字幕 / 用户给的是本地视频文件 | 走 Step 2-B 的 `transcribe_audio.sh` 转写；超过 45 分钟先问用户 |
+| 转写结果错字多 | 增大 `--model`（`small → medium`），或交叉核对专有名词；交付时提醒是机器转写 |
 | 多 P / 播放列表视频 | 问用户要哪一集，或加 `--playlist`（不推荐，除非用户明确要全部） |
 | 字幕太长超出上下文 | 分段读、分段总结，最后合并；不要只读开头就动笔 |
 | 截图模式缺 ffmpeg | `brew install ffmpeg`；装不上就跳过截图，只出文字笔记 |
@@ -267,7 +295,7 @@ rm -rf /tmp/yt-obsidian
 ```bash
 SKILL_DIR=/tmp/yt-obsidian-skill
 mkdir -p "$SKILL_DIR/scripts"
-for f in check_deps.sh fetch_transcript.sh clean_srt.py make_screenshots.sh resolve_vault.sh; do
+for f in check_deps.sh fetch_transcript.sh clean_srt.py transcribe_audio.sh make_screenshots.sh resolve_vault.sh; do
   curl -fsSL "https://raw.githubusercontent.com/dululu/youtube-to-obsidian/main/scripts/$f" -o "$SKILL_DIR/scripts/$f"
 done
 chmod +x "$SKILL_DIR"/scripts/*

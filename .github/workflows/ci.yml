@@ -43,8 +43,9 @@ jobs:
 
       - name: Scripts are executable
         run: |
-          test -x scripts/clean_srt.py
-          test -x scripts/fetch_transcript.sh
+          for f in scripts/*.sh scripts/*.py; do
+            test -x "$f" || { echo "$f 没有可执行权限"; exit 1; }
+          done
           echo "executable bits ok"
 
       - name: JSON manifests

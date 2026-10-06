@@ -4,7 +4,7 @@
   "display_name": "YouTube to Obsidian",
   "version": "1.0.0",
   "summary": "将 YouTube/Bilibili 视频自动转化为 Obsidian 结构化笔记（加「截图」可嵌入视频截图）",
-  "description": "抓字幕（人工优先、自动字幕兜底、多语言与 cookie 回退）→ 清洗去重 → 按内容类型选择写作策略（知识型用费曼策略重组重写，观点型用求真策略保留口语与论证节奏）→ 写入 Obsidian vault；加「截图」参数会用 ffmpeg 抽取带真实时间戳的关键帧并嵌入笔记对应段落。",
+  "description": "抓字幕（人工优先、自动字幕兜底、多语言与 cookie 回退）→ 清洗去重 → 按内容类型选择写作策略（知识型用费曼策略重组重写，观点型用求真策略保留口语与论证节奏）→ 写入 Obsidian vault；加「截图」参数会用 ffmpeg 抽取带真实时间戳的关键帧并嵌入笔记对应段落。输入也可以是本地视频/音频文件；完全没有字幕时走 Whisper 语音转写，不需要登录任何站点。",
   "author": {
     "name": "dululu",
     "email": "2399029980@qq.com",
@@ -13,17 +13,59 @@
   "license": "MIT",
   "repository": "https://github.com/dululu/youtube-to-obsidian",
   "homepage": "https://github.com/dululu/youtube-to-obsidian",
-  "keywords": ["obsidian", "youtube", "bilibili", "transcript", "yt-dlp", "notes", "screenshots"],
-  "categories": ["knowledge-management", "content-tools", "automation"],
+  "keywords": [
+    "obsidian",
+    "youtube",
+    "bilibili",
+    "transcript",
+    "yt-dlp",
+    "notes",
+    "screenshots",
+    "whisper",
+    "asr"
+  ],
+  "categories": [
+    "knowledge-management",
+    "content-tools",
+    "automation"
+  ],
   "inputs": [
-    {"name": "url", "type": "string", "required": true, "description": "视频链接"},
-    {"name": "screenshots", "type": "boolean", "required": false, "description": "是否抽取关键帧截图"},
-    {"name": "lang", "type": "string", "required": false, "description": "字幕语言优先级"},
-    {"name": "dir", "type": "string", "required": false, "description": "笔记存放目录"}
+    {
+      "name": "url",
+      "type": "string",
+      "required": true,
+      "description": "视频链接"
+    },
+    {
+      "name": "screenshots",
+      "type": "boolean",
+      "required": false,
+      "description": "是否抽取关键帧截图"
+    },
+    {
+      "name": "lang",
+      "type": "string",
+      "required": false,
+      "description": "字幕语言优先级"
+    },
+    {
+      "name": "dir",
+      "type": "string",
+      "required": false,
+      "description": "笔记存放目录"
+    }
   ],
   "outputs": [
-    {"name": "note", "type": "file", "description": "Obsidian Markdown 笔记"},
-    {"name": "screenshots", "type": "files", "description": "关键帧截图与 timestamps.tsv"}
+    {
+      "name": "note",
+      "type": "file",
+      "description": "Obsidian Markdown 笔记"
+    },
+    {
+      "name": "screenshots",
+      "type": "files",
+      "description": "关键帧截图与 timestamps.tsv"
+    }
   ],
   "example_invocation": {
     "chat": "帮我把这个视频转成 Obsidian 笔记 https://youtu.be/xxx 截图"
@@ -37,5 +79,7 @@
   },
   "screenshots": [],
   "icon": "",
-  "support": {"issues": "https://github.com/dululu/youtube-to-obsidian/issues"}
+  "support": {
+    "issues": "https://github.com/dululu/youtube-to-obsidian/issues"
+  }
 }

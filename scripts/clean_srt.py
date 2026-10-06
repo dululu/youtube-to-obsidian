@@ -245,11 +245,14 @@ def main() -> int:
     best_path, best_chars = sorted(best_group, key=lambda item: sort_key(item[0], item[1]))[0]
     out_dir = os.path.dirname(files[0]) if args.dir is None else args.dir
     target = os.path.join(out_dir, "transcript.txt")
-    shutil.copyfile(best_path, target)
+    # 输入本身就叫 transcript.srt 时会撞名，copy 之前先判断是否同一个文件
+    if os.path.abspath(best_path) != os.path.abspath(target):
+        shutil.copyfile(best_path, target)
     if args.timestamps:
         timed_src = best_path[:-4] + ".timed.txt"
-        if os.path.isfile(timed_src):
-            shutil.copyfile(timed_src, os.path.join(out_dir, "transcript.timed.txt"))
+        timed_target = os.path.join(out_dir, "transcript.timed.txt")
+        if os.path.isfile(timed_src) and os.path.abspath(timed_src) != os.path.abspath(timed_target):
+            shutil.copyfile(timed_src, timed_target)
 
     others = [f"{os.path.basename(p)} ({c})" for p, c in produced if p != best_path]
     print(f"\nbest -> {target}  <- {os.path.basename(best_path)} ({best_chars} 字符)")
